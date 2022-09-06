@@ -68,12 +68,14 @@ type (
 	}
 
 	cmdFlags struct {
+		filePath   string
 		titleFlag  string
 		sizeFlag   string
 		groupSize  int
 		listFlag   string
 		outputFlag string
 		verbose    bool
+		workDir    string
 	}
 
 	goListJSONModule struct {
@@ -126,10 +128,13 @@ func initRootCommand() (*cobra.Command, *templateData, *cmdFlags) {
 			tmplData.numOfTestsPerGroup = flags.groupSize
 			tmplData.ReportTitle = flags.titleFlag
 			tmplData.OutputFilename = flags.outputFlag
-			if err := checkIfStdinIsPiped(); err != nil {
+			//if err := checkIfStdinIsPiped(); err != nil {
+			//	return err
+			//}
+			stdin, err := os.Open(flags.filePath) // os.Stdin
+			if err != nil {
 				return err
 			}
-			stdin := os.Stdin
 			stdinScanner := bufio.NewScanner(stdin)
 			testReportHTMLTemplateFile, _ := os.Create(tmplData.OutputFilename)
 			reportFileWriter := bufio.NewWriter(testReportHTMLTemplateFile)
@@ -142,6 +147,7 @@ func initRootCommand() (*cobra.Command, *templateData, *cmdFlags) {
 					e = err
 				}
 			}()
+			os.Chdir(flags.workDir) //"/Users/bennyy/projects/golang-commons")
 			startTestTime := time.Now()
 			allPackageNames, allTests, err := readTestDataFromStdIn(stdinScanner, flags, cmd)
 			if err != nil {
@@ -179,6 +185,16 @@ func initRootCommand() (*cobra.Command, *templateData, *cmdFlags) {
 		},
 	}
 	rootCmd.AddCommand(versionCmd)
+	rootCmd.PersistentFlags().StringVarP(&flags.filePath,
+		"file",
+		"f",
+		"/tmp/t1_test.log",
+		"path to file to open")
+	rootCmd.PersistentFlags().StringVarP(&flags.workDir,
+		"workdir",
+		"w",
+		".",
+		"source code working directory root")
 	rootCmd.PersistentFlags().StringVarP(&flags.titleFlag,
 		"title",
 		"t",
