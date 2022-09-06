@@ -26,12 +26,12 @@ import (
 
 type (
 	goTestOutputRow struct {
-		Time     string
-		TestName string `json:"Test"`
-		Action   string
-		Package  string
-		Elapsed  float64
-		Output   string
+		Time    string
+		Test    string
+		Action  string
+		Package string
+		Elapsed float64
+		Output  string
 	}
 
 	testStatus struct {
@@ -147,7 +147,9 @@ func initRootCommand() (*cobra.Command, *templateData, *cmdFlags) {
 					e = err
 				}
 			}()
-			os.Chdir(flags.workDir) //"/Users/bennyy/projects/golang-commons")
+			if err := os.Chdir(flags.workDir); err != nil {
+				return err
+			}
 			startTestTime := time.Now()
 			allPackageNames, allTests, err := readTestDataFromStdIn(stdinScanner, flags, cmd)
 			if err != nil {
@@ -246,12 +248,12 @@ func readTestDataFromStdIn(stdinScanner *bufio.Scanner, flags *cmdFlags, cmd *co
 		if err := json.Unmarshal(lineInput, goTestOutputRow); err != nil {
 			return nil, nil, err
 		}
-		if goTestOutputRow.TestName != "" {
+		if goTestOutputRow.Test != "" {
 			var status *testStatus
-			key := goTestOutputRow.Package + "." + goTestOutputRow.TestName
+			key := goTestOutputRow.Package + "." + goTestOutputRow.Test
 			if _, exists := allTests[key]; !exists {
 				status = &testStatus{
-					TestName: goTestOutputRow.TestName,
+					TestName: goTestOutputRow.Test,
 					Package:  goTestOutputRow.Package,
 					Output:   []string{},
 				}
